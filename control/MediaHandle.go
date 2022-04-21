@@ -3,30 +3,34 @@ package control
 import (
 	"backman/database"
 	"backman/structs"
-	"log"
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-func MediauplodS3(media structs.Media, FolderName string, uploader *s3manager.Uploader) {
-	if media.Gallery != nil {
-		for _, value := range media.Gallery {
-			log.Println(value)
-			resp, err := http.Get(value)
-			if err != nil {
-				log.Println("failed to get from %s", value)
-				continue
-			}
-			// f, err := os.Create("jin.jpg")
-			// if err != nil {
-			// 	log.Print(err)
-			// 	continue
-			// }
-			// io.Copy(f, resp.Body)
-			// f.Close()
-			errs := database.InsertObjectWithS3(uploader, "gmetadata", "man/naked/huhu.jpg", resp.Body)
-			log.Println(errs)
+func MediauplodS3(media structs.Media, BaseDirectoryName string, uploader *s3manager.Uploader) {
+	if media.Trailer != "" {
+		go downloadNupload(media.Thumbnail, fmt.Sprintf("%s/trailer.mp4", BaseDirectoryName), uploader, database.InsertObjectWithS3)
+	}
+	if media.Poster != "" {
+		go downloadNupload(media.Poster, fmt.Sprintf("%s/poster.jpg", BaseDirectoryName), uploader, database.InsertObjectWithS3)
+	}
+	if media.Thumbnail != "" {
+		go downloadNupload(media.Thumbnail, fmt.Sprintf("%s/thumbnail.jpg", BaseDirectoryName), uploader, database.InsertObjectWithS3)
+	}
+	if len(media.Gallery) > 0 {
+		for i, v := range media.Gallery {
+			go downloadNupload(v, fmt.Sprintf("%s/gallery/%s.jpg", BaseDirectoryName, fmt.Sprint(i)), uploader, database.InsertObjectWithS3)
 		}
 	}
+}
+
+func downloadNupload(url string, folder string, uploader *s3manager.Uploader, f func(*s3manager.Uploader, string, string, io.Reader) error) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	return f(uploader, bucketName, folder, resp.Body)
 }

@@ -1,0 +1,25 @@
+[
+    {
+        "_id": {
+            "$oid": "60e08bce3a509dc0296f5f38"
+        },
+        "Episode_ID": "160177",
+        "description": "none",
+        "duration": {
+            "$numberInt": "0"
+        },
+        "performer": {
+            "Jason Long (ndm)": [
+                "0-121800",
+                " solo"
+            ]
+        },
+        "performer_finder": "jasonlong(ndm)",
+        "release_date": "2021-06-29",
+        "studio": "Stag Collective",
+        "studio_finder": "stagcollective",
+        "thumb_url": "https://www.gayeroticvideoindex.com/images/Episodes/episode160177b.jpg",
+        "title": "Introducing: Jason Long",
+        "title_finder": "introducing:jasonlong"
+    }
+]

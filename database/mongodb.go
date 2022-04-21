@@ -1,10 +1,11 @@
 package database
 
 import (
+	"backman/structs"
 	"context"
 	"log"
-	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -31,13 +32,12 @@ func GetCollection(db *mongo.Client, DBName string, CollectionName string) *mong
 	col := db.Database(DBName).Collection(CollectionName)
 	return col
 }
-func InsertDocumentIfDoesntExist(Collection *mongo.Collection, doc interface{}) error {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	upsert := options.Update()
-	t := true
-	upsert.Upsert = &t
-	// res, err := Collection.UpdateOne(ctx, doc, doc, upsert)
-	res, err := Collection.InsertOne(ctx, doc)
+
+func InsertDocumentIfDoesntExist[T structs.EpisodeMetadata | map[string]string | structs.MovieMetadata](Collection *mongo.Collection, doc T, uniqueURL string) error {
+	upsert := options.Update().SetUpsert(true)
+	filter := bson.D{{"url", uniqueURL}}
+	d := bson.M{"$set": doc}
+	res, err := Collection.UpdateOne(context.TODO(), filter, d, upsert)
 	log.Println("mongo action")
 	log.Println(res)
 	return err

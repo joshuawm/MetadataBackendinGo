@@ -1,9 +1,12 @@
-package structs
+# Document
 
-type metadata interface {
-	EpisodeMetadata | MovieMetadata | map[string]interface{}
-}
+## API Usage
+所有的接口将仿照RESTFul的方式进行设计，也就是/api/catalogue/function
+### **Upload**
+将爬取的数据上传到服务端进行处理的接口，将包含数据入库（ NOSQL(MongoDb) SQL(MariaDB) ），媒体数据上传到S3服务商(backblaze ...etc) 和Onedrive进行保存 \
 
+>`POST` &nbsp; `/api/v1/upload`: \
+```go
 type UploadInterface struct {
 	EpMeta  EpisodeMetadata   `json:"epmeta"`
 	MoMeta  MovieMetadata     `json:"moviemeta"`
@@ -53,3 +56,29 @@ type PerformerMeta struct { //only for SQL
 	Name   string
 	Others string //JSON stringfied string
 }
+
+
+```
+
+### **Redis**
+Redis操作接口
+#### Redis BloomFilter 
+URL去重检测 \
+接口：\
+`GET` &nbsp; `/api/v1/redis/bf/exist?value={string}` \
+使用bloomfilter检测value传入的string是否存在
+`POST` &nbsp; `/api/v1/redis/bf/put?value={string}` \
+使用bloomfilter放入当前的value，若存在会报错并且返回status为false
+
+##### Response
+```go
+type RedisResponse struct {
+	Result bool   `json:"result"`
+	Err    string `json:"err"`
+}
+```
+ 
+
+## 后台架构
+### SQL数据库
+
