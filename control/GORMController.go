@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
-	"github.com/gofiber/fiber/v2"
 	"golang.org/x/exp/slices"
 )
 
@@ -42,46 +42,56 @@ func UpdateSchemas() {
 	GormDB.Raw("SELECT nspname FROM pg_catalog.pg_namespace;").Scan(&schemas)
 }
 
-func AllSchemaHandle(c *fiber.Ctx) error {
+func AllSchemaHandle(w http.ResponseWriter, req *http.Request) {
 	if len(schemas) == 0 {
 		UpdateSchemas()
 	}
 	r, err := json.Marshal(schemas)
 	if err != nil {
-		c.SendStatus(http.StatusBadRequest)
-		return c.Send([]byte(err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
 	}
-	return c.Send(r)
+	w.Write(r)
+	return
 }
 
 type schemaQueryString struct {
 	Name string
 }
 
-func CreateSchemaHandle(c *fiber.Ctx) error {
+func CreateSchemaHandle(w http.ResponseWriter, req *http.Request) {
 	if len(schemas) == 0 {
 		UpdateSchemas()
 	}
-	q := schemaQueryString{}
-	err := c.QueryParser(&q)
-	if err != nil {
-		c.SendStatus(http.StatusBadRequest)
-		return c.Send([]byte(err.Error()))
+	q := req.URL.Query().Get("value")
+	var err error = nil
+	if q == "" {
+		err = errors.New("no value inpouted")
 	}
-	schemaName := q.Name
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	schemaName := strings.ToLower(q)
 	if schemaName == "" {
-		c.SendStatus(http.StatusBadRequest)
-		return c.Send([]byte("name值为空！"))
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("name值为空！"))
+		return
 	}
 	if slices.Contains(schemas, schemaName) {
-		c.SendStatus(http.StatusBadRequest)
-		return c.Send([]byte(fmt.Sprintf("%s这个schema已经存在！", schemaName)))
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Sprintf("%s这个schema已经存在！", schemaName)))
+		return
 	}
 	err = gromimplement.CreateSchema(schemaName, GormDB)
 	if err != nil {
-		c.SendStatus(http.StatusBadRequest)
-		return c.Send([]byte(err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
 	} else {
-		return c.Send([]byte("sucess!"))
+		w.Write([]byte("sucess!"))
+		return
 	}
 }

@@ -3,9 +3,10 @@ package main
 import (
 	"backman/control"
 	"log"
+	"net/http"
 	"os"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 )
 
@@ -21,14 +22,14 @@ func main() {
 	MongoURL := os.Getenv("MongodbUrl")
 
 	control.Initial(control.S3Credential{S3ID, S3Key, S3Bucket}, MongoURL)
-	// log.Print(S3ID, S3Key, S3Bucket, MongoURL)
-	app := fiber.New()
-	app.Post("/api/v1/upload", control.Handle)
-	app.Get("/api/v1/redis/bf/exist", control.RedisHandleGet)
-	app.Get("/api/v1/gorm/pg/schemas", control.AllSchemaHandle)
-	app.Get("/api/v1/gorm/pg/schema/create", control.CreateSchemaHandle)
-	app.Put("/api/v1/redis/bf/put", control.RedisHandlePut)
+	log.Print(S3ID, S3Key, S3Bucket, MongoURL)
+	app := mux.NewRouter()
+	app.HandleFunc("/api/v1/upload", control.Handle).Methods("POST")
+	app.HandleFunc("/api/v1/redis/bf/exist", control.RedisHandleGet).Methods("GET")
+	app.HandleFunc("/api/v1/gorm/pg/schemas", control.AllSchemaHandle).Methods("GET")
+	app.HandleFunc("/api/v1/redis/bf/put", control.RedisHandlePut).Methods("PUT")
+	app.HandleFunc("/api/v1/gorm/pg/schema/create", control.CreateSchemaHandle)
 
-	app.Listen(":9090")
+	http.ListenAndServe(":9090", app)
 
 }

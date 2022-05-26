@@ -45,7 +45,7 @@ func InsertEpisode(db *gorm.DB, data structs.EpisodeMetadata, name string) error
 		if err != nil {
 			return err
 		}
-		episode := Episode{URL: data.URl, Name: data.Name, Desc: data.Desc, Series: cString(data.Series), ReleaseDate: cInt(data.ReleaseDate), Runtime: cInt(data.Runtime), Tags: cString(string(tags)), Code: cString(data.Code)}
+		episode := Episode{URL: data.URl, Name: data.Name, Desc: data.Desc, Series: cString(*data.Series), ReleaseDate: data.ReleaseDate, Runtime: data.Runtime, Tags: cString(string(tags)), Code: cString(*data.Code)}
 		if err != nil {
 
 			return err
@@ -76,7 +76,7 @@ func InsertMovie(db *gorm.DB, data structs.MovieMetadata, name string) error {
 		if err != nil {
 			return err
 		}
-		movie := Movie{URL: data.URl, Name: data.Name, Desc: data.Desc, Series: cString(data.Series), ReleaseDate: cInt(data.ReleaseDate), Runtime: cInt(data.Runtime), Tags: cString(string(tags)), Code: cString(data.Code)}
+		movie := Movie{URL: data.URl, Name: data.Name, Desc: data.Desc, Series: cString(*data.Series), ReleaseDate: data.ReleaseDate, Runtime: data.Runtime, Tags: cString(string(tags)), Code: cString(*data.Code)}
 		result := db.Table(fmt.Sprintf("%s.movies", name)).Create(&movie)
 		if result.Error != nil {
 			return result.Error
@@ -115,14 +115,11 @@ func cString(v string) *string {
 	}
 }
 
-func cInt(v int) *int {
-	if v == 0 {
-		return nil
-	} else {
-		return &v
-	}
-}
+// func cInt(v int) *int {
 
-func main() {
-	fmt.Println("gorm main exec!")
-}
+// 	if v == 0 {
+// 		return nil
+// 	} else {
+// 		return &v
+// 	}
+// }

@@ -4,14 +4,14 @@ import (
 	"backman/database"
 	"backman/database/gromimplement"
 	"backman/structs"
+	"encoding/json"
+	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/gofiber/fiber/v2"
-
 	"go.mongodb.org/mongo-driver/mongo"
-
 	"gorm.io/gorm"
 )
 
@@ -43,7 +43,10 @@ func Initial(S3Info S3Credential, MongoURL string) {
 func process(Structdata <-chan structs.UploadInterface, client *mongo.Client) {
 	for d := range Structdata {
 		log.Println("received")
-		GormHandler(d)
+		err := GormHandler(d)
+		if err != nil {
+			log.Panicln(fmt.Sprintf("got an error: %s", err.Error()))
+		}
 		if d.EpMeta.URl != "" {
 			database.InsertDocumentIfDoesntExist(database.GetCollection(MongoClient, d.Name, "episode"), d.EpMeta, d.Name)
 		} else if d.MoMeta.URl != "" {
@@ -54,10 +57,17 @@ func process(Structdata <-chan structs.UploadInterface, client *mongo.Client) {
 	}
 }
 
-func Handle(c *fiber.Ctx) error {
+func Handle(w http.ResponseWriter, r *http.Request) {
 	var data structs.UploadInterface
-	c.BodyParser(&data)
-	contents <- data
-	return c.Send([]byte("received"))
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		w.Write([]byte("failed to parse json"))
+
+	}
+
+	// contents <- data
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("received"))
 
 }
